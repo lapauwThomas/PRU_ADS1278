@@ -110,15 +110,15 @@ int main(void) {
 
           __R30 = __R30 | (1<<15); //clock high for first bit
         //  payload[i] = __R31 & 0x000F; //only 8 lsb to payload
-          payload[i] = (uint8_t) 0x41+i; //only 8 lsb to payload
+          payload[i] = (uint8_t) (0x41 + (__R31 & 0xFF)); //only 8 lsb to payload
           __R30 = __R30 & ~(1<<15); //  Clock to low
-      }
+          }
       __R30 = __R30 | (1<<15); //clock high for first bit
-      payload[i] = (uint8_t)"\n";
+     // payload[i] = (uint8_t)"\n";
       //send data to host
  //     uint8_t hello[] = "hello \n";
  //     pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
-      pru_rpmsg_send(&transport, dst, src, payload, 26); //buffer length check
+      pru_rpmsg_send(&transport, dst, src, payload, 28); //buffer length check
 
   }
 
