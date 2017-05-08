@@ -118,7 +118,7 @@ int main(void) {
       //send data to host
  //     uint8_t hello[] = "hello \n";
  //     pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
-      pru_rpmsg_send(&transport, dst, src, payload, 28); //buffer length check
+      pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
 
   }
 
