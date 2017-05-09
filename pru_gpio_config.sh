@@ -25,8 +25,12 @@ config-pin P9.31 pruin
 config-pin P9.29 pruin
 config-pin P9.30 pruin
 config-pin P9.28 pruin
-config-pin P9.42.1 pruin
+config-pin P9.92 pruin
 config-pin P9.27 pruin
-config-pin P9.41.1 pruin
+config-pin P9.91 pruin
 config-pin P9.25 pruin
 
+#pru1 r31 0 !DRDY
+config-pin P8.45 pruin
+#pru1 r31 1 PPS
+config-pin P8.46 pruin
