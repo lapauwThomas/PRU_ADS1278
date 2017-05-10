@@ -1,7 +1,7 @@
 ******************************************************************************
                      PRU Linker PC v2.1.4                      
 ******************************************************************************
->> Linked Wed Apr 26 18:18:58 2017
+>> Linked Wed May 10 16:43:04 2017
 
 OUTPUT FILE NAME:   <PRU_ADS1278.out>
 ENTRY POINT SYMBOL: "_c_int00_noinit_noargs_noexit"  address: 00000000
@@ -12,7 +12,7 @@ MEMORY CONFIGURATION
          name            origin    length      used     unused   attr    fill
 ----------------------  --------  ---------  --------  --------  ----  --------
 PAGE 0:
-  PRU_IMEM              00000000   00002000  0000057c  00001a84  RWIX
+  PRU_IMEM              00000000   00002000  00000568  00001a98  RWIX
 
 PAGE 1:
   PRU_DMEM_0_1          00000000   00002000  000002a0  00001d60  RWIX
@@ -60,19 +60,19 @@ section   page    origin      length       input sections
 *          0    00000000    00000014     
                   00000000    00000014     rtspruv3_le.lib : boot_special.obj (.text:_c_int00_noinit_noargs_noexit)
 
-.text      0    00000014    00000568     
-                  00000014    00000188     main.obj (.text:main)
-                  0000019c    000000d8     rpmsg_lib.lib : pru_rpmsg.object (.text:pru_rpmsg_send)
-                  00000274    000000c4                   : pru_rpmsg.object (.text:pru_rpmsg_receive)
-                  00000338    00000060                   : pru_rpmsg.object (.text:pru_rpmsg_init)
-                  00000398    00000060                   : pru_virtqueue.object (.text:pru_virtqueue_get_avail_buf)
-                  000003f8    00000060                   : pru_virtqueue.object (.text:pru_virtqueue_init)
-                  00000458    0000005c                   : pru_rpmsg.object (.text:pru_rpmsg_channel)
-                  000004b4    0000005c                   : pru_virtqueue.object (.text:pru_virtqueue_add_used_buf)
-                  00000510    00000034     rtspruv3_le.lib : memcpy.obj (.text)
-                  00000544    00000028     rpmsg_lib.lib : pru_virtqueue.object (.text:pru_virtqueue_kick)
-                  0000056c    00000008     rtspruv3_le.lib : exit.obj (.text:abort)
-                  00000574    00000008                     : exit.obj (.text:loader_exit)
+.text      0    00000014    00000554     
+                  00000014    00000174     main.obj (.text:main)
+                  00000188    000000d8     rpmsg_lib.lib : pru_rpmsg.object (.text:pru_rpmsg_send)
+                  00000260    000000c4                   : pru_rpmsg.object (.text:pru_rpmsg_receive)
+                  00000324    00000060                   : pru_rpmsg.object (.text:pru_rpmsg_init)
+                  00000384    00000060                   : pru_virtqueue.object (.text:pru_virtqueue_get_avail_buf)
+                  000003e4    00000060                   : pru_virtqueue.object (.text:pru_virtqueue_init)
+                  00000444    0000005c                   : pru_rpmsg.object (.text:pru_rpmsg_channel)
+                  000004a0    0000005c                   : pru_virtqueue.object (.text:pru_virtqueue_add_used_buf)
+                  000004fc    00000034     rtspruv3_le.lib : memcpy.obj (.text)
+                  00000530    00000028     rpmsg_lib.lib : pru_virtqueue.object (.text:pru_virtqueue_kick)
+                  00000558    00000008     rtspruv3_le.lib : exit.obj (.text:abort)
+                  00000560    00000008                     : exit.obj (.text:loader_exit)
 
 .bss       1    00000000    00000100     UNINITIALIZED
                   00000000    00000100     (.common:payload)
@@ -135,7 +135,7 @@ GLOBAL SYMBOLS: SORTED ALPHABETICALLY BY Name
 
 page  address   name                         
 ----  -------   ----                         
-0     00000574  C$$EXIT                      
+0     00000560  C$$EXIT                      
 2     00026000  CT_CFG                       
 2     00020000  CT_INTC                      
 abs   481cc000  __PRU_CREG_BASE_DCAN0        
@@ -208,20 +208,20 @@ abs   ffffffff  __binit__
 abs   ffffffff  __c_args__                   
 0     00000000  _c_int00_noinit_noargs_noexit
 1     00000100  _stack                       
-0     0000056c  abort                        
+0     00000558  abort                        
 abs   ffffffff  binit                        
 0     00000014  main                         
-0     00000510  memcpy                       
+0     000004fc  memcpy                       
 1     00000000  payload                      
 1     0000029c  pru_intc_map                 
-0     00000458  pru_rpmsg_channel            
-0     00000338  pru_rpmsg_init               
-0     00000274  pru_rpmsg_receive            
-0     0000019c  pru_rpmsg_send               
-0     000004b4  pru_virtqueue_add_used_buf   
-0     00000398  pru_virtqueue_get_avail_buf  
-0     000003f8  pru_virtqueue_init           
-0     00000544  pru_virtqueue_kick           
+0     00000444  pru_rpmsg_channel            
+0     00000324  pru_rpmsg_init               
+0     00000260  pru_rpmsg_receive            
+0     00000188  pru_rpmsg_send               
+0     000004a0  pru_virtqueue_add_used_buf   
+0     00000384  pru_virtqueue_get_avail_buf  
+0     000003e4  pru_virtqueue_init           
+0     00000530  pru_virtqueue_kick           
 1     00000200  resourceTable                
 
 
@@ -231,17 +231,17 @@ page  address   name
 ----  -------   ----                         
 0     00000000  _c_int00_noinit_noargs_noexit
 0     00000014  main                         
-0     0000019c  pru_rpmsg_send               
-0     00000274  pru_rpmsg_receive            
-0     00000338  pru_rpmsg_init               
-0     00000398  pru_virtqueue_get_avail_buf  
-0     000003f8  pru_virtqueue_init           
-0     00000458  pru_rpmsg_channel            
-0     000004b4  pru_virtqueue_add_used_buf   
-0     00000510  memcpy                       
-0     00000544  pru_virtqueue_kick           
-0     0000056c  abort                        
-0     00000574  C$$EXIT                      
+0     00000188  pru_rpmsg_send               
+0     00000260  pru_rpmsg_receive            
+0     00000324  pru_rpmsg_init               
+0     00000384  pru_virtqueue_get_avail_buf  
+0     000003e4  pru_virtqueue_init           
+0     00000444  pru_rpmsg_channel            
+0     000004a0  pru_virtqueue_add_used_buf   
+0     000004fc  memcpy                       
+0     00000530  pru_virtqueue_kick           
+0     00000558  abort                        
+0     00000560  C$$EXIT                      
 1     00000000  payload                      
 1     00000100  _stack                       
 1     00000200  __TI_STACK_END               

@@ -14,7 +14,7 @@ ORDERED_OBJS += \
 "../AM335x_PRU.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
--l"C:/Users/thoma/CloudStation/School/2MA/semester2/embeddedProj/LinuxSDK/pru-icss-5.1.0/lib/rpmsg_lib.lib" \
+-l"C:/ti2/pru-software-support-package/lib/rpmsg_lib.lib" \
 
 -include ../makefile.init
 
@@ -140,7 +140,7 @@ all: PRU_ADS1278.out
 PRU_ADS1278.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: PRU Linker'
-	"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/bin/clpru" -v3 -g --define=am3359 --define=pru0 --display_error_number --diag_wrap=off --diag_warning=225 --hardware_mac=on --endian=little -z -m"PRU_ADS1278.map" --stack_size=0x100 --heap_size=0x100 -i"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/lib" -i"C:/Users/thoma/CloudStation/School/2MA/semester2/embeddedProj/LinuxSDK/pru-icss-5.1.0/lib" -i"C:/ti2/AM335X_StarterWare_02_00_01_01/include" -i"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/include" --reread_libs --define=PRU_CORE=1 --warn_sections --diag_wrap=off --display_error_number --xml_link_info="PRU_ADS1278_linkInfo.xml" --rom_model -o "PRU_ADS1278.out" $(ORDERED_OBJS)
+	"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/bin/clpru" -v3 -g --define=am3359 --define=pru0 --display_error_number --diag_wrap=off --diag_warning=225 --hardware_mac=on --endian=little -z -m"PRU_ADS1278.map" --stack_size=0x100 --heap_size=0x100 -i"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/lib" -i"C:/ti2/pru-software-support-package/lib" -i"C:/ti2/AM335X_StarterWare_02_00_01_01/include" -i"C:/ti2/ccsv7/tools/compiler/ti-cgt-pru_2.1.4/include" --reread_libs --define=PRU_CORE=1 --warn_sections --diag_wrap=off --display_error_number --xml_link_info="PRU_ADS1278_linkInfo.xml" --rom_model -o "PRU_ADS1278.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

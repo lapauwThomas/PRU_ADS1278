@@ -29,6 +29,23 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
+
+//PRU0
+#define DATA_IN     ( (uint8_t)( __R31 & 0x000000FF ) )  //bit 7-0
+#define nDRDY       ( __R31 & 0x00004000 )  //bit 14
+#define SCLK        ( __R30 & 0x00008000 )  //bit 15
+
+#define SCLK_SET    ( __R30 =  __R30 | 0x00008000 )  //set bit 15
+#define SCLK_CLR    ( __R30 =  __R30 & 0xFFFF7FFF )  //clear bit 15
+#define SCLK_TOGGLE ( __R30 =  __R30 ^ 0x00008000 )  //toggle bit 15
+
+
+//PRU1
+//#define nDRDY       ( (uint8_t)( __R31 & 0x00000001 ) )  //bit 0
+//#define SCLK        ( (uint8_t)( __R31 & 0x00000002 ) )  //bit 1
+
+
 // Define remoteproc related variables.
 #define HOST_INT ((uint32_t)1 << 30)
 
@@ -56,6 +73,7 @@ int8_t payload[256];
 #define PRU_SHAREDMEM 0x00010000
 volatile register uint32_t __R30;
 volatile register uint32_t __R31;
+
 uint32_t spiCommand;
 
 int main(void) {
@@ -96,11 +114,30 @@ int main(void) {
   uint8_t hello[] = "hello \n";
   pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
 
-  while (1) {
+  while (1)
+  {
 
+     while( nDRDY );
+
+     int i = 0;
+     for ( i = 0; i < 24; i = i + 1)  //  Inner single sample loop
+     {
+         //cycle clock
+         SCLK_SET; //clock high for first bit
+         payload[i] = (uint8_t)(DATA_IN); //only 8 lsb to payload
+         SCLK_CLR;
+     }
+
+     SCLK_SET; //clock high when idle
+
+     //send data to host
+     pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
+
+
+/*
       // wait for data Ready low
       while ((__R31 & (1<<14))) { //while bit 14 is set
-          __R30 ^= (1<<14); //  togle PRU 30_14
+          __R30 ^= (1<<14); //  toggle PRU 30_14
       }
       __R30 = __R30 & ~(1<<15); //  Clock to low
       int i = 0;
@@ -110,7 +147,7 @@ int main(void) {
 
           __R30 = __R30 | (1<<15); //clock high for first bit
         //  payload[i] = __R31 & 0x000F; //only 8 lsb to payload
-          payload[i] = (uint8_t) (0x41 + (__R31 & 0xFF)); //only 8 lsb to payload
+          payload[i] = (uint8_t) (0x42 + (__R31 & 0xFF)); //only 8 lsb to payload
           __R30 = __R30 & ~(1<<15); //  Clock to low
           }
       __R30 = __R30 | (1<<15); //clock high for first bit
@@ -119,8 +156,9 @@ int main(void) {
  //     uint8_t hello[] = "hello \n";
  //     pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
       pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
+*/
 
   }
 
-  __halt(); // halt the PRU
+  //__halt(); // halt the PRU
 }
