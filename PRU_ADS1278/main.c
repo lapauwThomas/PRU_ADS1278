@@ -70,6 +70,8 @@
 //  Buffer used for PRU to ARM communication.
 int8_t payload[256];
 
+int8_t test[2];
+
 #define PRU_SHAREDMEM 0x00010000
 volatile register uint32_t __R30;
 volatile register uint32_t __R31;
@@ -124,41 +126,39 @@ int main(void) {
      {
          //cycle clock
          SCLK_SET; //clock high for first bit
-         payload[i] = (uint8_t)(DATA_IN); //only 8 lsb to payload
+         payload[i] = DATA_IN; //only 8 lsb to payload
          SCLK_CLR;
      }
 
      SCLK_SET; //clock high when idle
 
+
+     //test[0] = 0x09; //horizontal tab: 0x09, carriage return: 0x0D
+     //test[1] = 0x0A; //new line: 0x0A
+
+
+     //int l = 0;
+     //for( l = 0; l < 8; l++ )
+     //{
+     //    pru_rpmsg_send(&transport, dst, src, payload+(l*3), 3); //buffer length check
+     //    pru_rpmsg_send(&transport, dst, src, test, 1);
+     //}
+
+     //pru_rpmsg_send(&transport, dst, src, test+1, 1); //new line
+
+
      //send data to host
      pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
+     //pru_rpmsg_send(&transport, dst, src, test, 2); //buffer length check
+     //pru_rpmsg_send(&transport, dst, src, test, 1); //buffer length check
+     //pru_rpmsg_send(&transport, dst, src, payload_2, 3); //buffer length check
 
 
-/*
-      // wait for data Ready low
-      while ((__R31 & (1<<14))) { //while bit 14 is set
-          __R30 ^= (1<<14); //  toggle PRU 30_14
-      }
-      __R30 = __R30 & ~(1<<15); //  Clock to low
-      int i = 0;
-      for ( i = 0; i < 24; i = i + 1) { //  Inner single sample loop
-
-          //cycle clock
-
-          __R30 = __R30 | (1<<15); //clock high for first bit
-        //  payload[i] = __R31 & 0x000F; //only 8 lsb to payload
-          payload[i] = (uint8_t) (0x42 + (__R31 & 0xFF)); //only 8 lsb to payload
-          __R30 = __R30 & ~(1<<15); //  Clock to low
-          }
-      __R30 = __R30 | (1<<15); //clock high for first bit
-     // payload[i] = (uint8_t)"\n";
-      //send data to host
- //     uint8_t hello[] = "hello \n";
- //     pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
-      pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
-*/
+     //wait a while to prevent console overflow
+     uint16_t j,k = 0;
+     for ( j = 0; j < 3000; j++) { for ( k = 0; k < 3000; k++); };
 
   }
 
-  //__halt(); // halt the PRU
+  __halt(); // halt the PRU
 }
