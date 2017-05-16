@@ -115,22 +115,33 @@ int main(void) {
   /* Priming the 'hostbuffer' with a message */
   uint8_t hello[] = "hello \n";
   pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
-
+  SCLK_CLR;
+  uint32_t count = 0;
   while (1)
   {
 
      while( nDRDY );
-
+//     SCLK_SET; //clock high for first bit
+//     payload[0] = DATA_IN; //reed MSB in parallel
+//     SCLK_CLR;
+//     __delay_cycles(7);
      int i = 0;
-     for ( i = 0; i < 24; i = i + 1)  //  Inner single sample loop
+     payload[0] = (uint8_t)((count & 0xFF000000)>>24);
+     payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
+     payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
+     payload[3] = (uint8_t)((count & 0x000000FF));
+     for ( i = 0; i < 24; i++)  //  Inner single sample loop
      {
          //cycle clock
          SCLK_SET; //clock high for first bit
-         payload[i] = DATA_IN; //only 8 lsb to payload
-         SCLK_CLR;
-     }
 
-     SCLK_SET; //clock high when idle
+         payload[4+i] = DATA_IN; //only 8 lsb to payload
+
+         SCLK_CLR;
+        // __delay_cycles(2);
+     }
+     count++;
+
 
 
      //test[0] = 0x09; //horizontal tab: 0x09, carriage return: 0x0D
@@ -148,15 +159,15 @@ int main(void) {
 
 
      //send data to host
-     pru_rpmsg_send(&transport, dst, src, payload, 24); //buffer length check
+     pru_rpmsg_send(&transport, dst, src, payload, 24+4); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, test, 2); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, test, 1); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, payload_2, 3); //buffer length check
 
 
-     //wait a while to prevent console overflow
-     uint16_t j,k = 0;
-     for ( j = 0; j < 3000; j++) { for ( k = 0; k < 3000; k++); };
+//     //wait a while to prevent console overflow
+//     uint16_t j,k = 0;
+//     for ( j = 0; j < 3000; j++) { for ( k = 0; k < 3000; k++); };
 
   }
 
