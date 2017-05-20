@@ -68,7 +68,7 @@
 #define VIRTIO_CONFIG_S_DRIVER_OK 4
 
 //  Buffer used for PRU to ARM communication.
-int8_t payload[256];
+uint8_t payload[256];
 
 int8_t test[2];
 
@@ -116,32 +116,88 @@ int main(void) {
   uint8_t hello[] = "hello \n";
   pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
   SCLK_CLR;
-  uint32_t count = 0;
+  uint32_t cCount = 0;
+
+//
+ //initCcount();
+ enableCcount();
+  __delay_cycles(1000);
+ cCount = getCcount();
+
+  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+  uint8_t banaan[] = "geel \n";
+  pru_rpmsg_send(&transport, dst, src, banaan, 10); //buffer length check
+
+  __delay_cycles(1000);
+ cCount = getCcount();
+
+  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+  uint8_t rood[] = "rood \n";
+    pru_rpmsg_send(&transport, dst, src, rood, 10); //buffer length check
+
+    clearCcount();
+
+    cCount = getCcount();
+
+      payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+      payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+      payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+      payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+      pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+      uint8_t groen[] = "groen \n";
+        pru_rpmsg_send(&transport, dst, src, groen, 10); //buffer length check
+//  __delay_cycles(10000);
+//
+//  cCount = getCcount();
+//    payload[0] = (uint8_t)((count & 0xFF000000)>>24);
+//    payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
+//    payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
+//    payload[3] = (uint8_t)((count & 0x000000FF));
+//    pru_rpmsg_send(&transport, dst, src, payload, 4); //buffer length check
+//
+
   while (1)
   {
-
-     while( nDRDY );
-//     SCLK_SET; //clock high for first bit
-//     payload[0] = DATA_IN; //reed MSB in parallel
-//     SCLK_CLR;
-//     __delay_cycles(7);
-     int i = 0;
-     payload[0] = (uint8_t)((count & 0xFF000000)>>24);
-     payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
-     payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
-     payload[3] = (uint8_t)((count & 0x000000FF));
-     for ( i = 0; i < 24; i++)  //  Inner single sample loop
-     {
-         //cycle clock
-         SCLK_SET; //clock high for first bit
-
-         payload[4+i] = DATA_IN; //only 8 lsb to payload
-
-         SCLK_CLR;
-        // __delay_cycles(2);
-     }
-     count++;
-
+//
+//     while( nDRDY );
+////     SCLK_SET; //clock high for first bit
+////     payload[0] = DATA_IN; //reed MSB in parallel
+////     SCLK_CLR;
+////     __delay_cycles(7);
+//     int i = 0;
+//     payload[0] = (uint8_t)((count & 0xFF000000)>>24);
+//     payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
+//     payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
+//     payload[3] = (uint8_t)((count & 0x000000FF));
+//     for ( i = 0; i < 24; i++)  //  Inner single sample loop
+//     {
+//         //cycle clock
+//         SCLK_SET; //clock high for first bit
+//
+//         payload[4+i] = DATA_IN; //only 8 lsb to payload
+//
+//         SCLK_CLR;
+//        // __delay_cycles(2);
+//     }
+//     count++;
+//
 
 
      //test[0] = 0x09; //horizontal tab: 0x09, carriage return: 0x0D
@@ -159,7 +215,7 @@ int main(void) {
 
 
      //send data to host
-     pru_rpmsg_send(&transport, dst, src, payload, 24+4); //buffer length check
+// pru_rpmsg_send(&transport, dst, src, payload, 24+4); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, test, 2); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, test, 1); //buffer length check
      //pru_rpmsg_send(&transport, dst, src, payload_2, 3); //buffer length check
@@ -172,4 +228,43 @@ int main(void) {
   }
 
   __halt(); // halt the PRU
+}
+
+void initCcount(){
+
+   asm volatile ("  LDI32    r0, 0x00022028 \n");
+   asm volatile( " LDI32    r1, 0x00022000 \n" );
+   asm volatile( " SBBO   &r1, r0, 0, 4 \n" );
+   asm volatile( " JMP r3.w2 \n" );
+}
+void enableCcount(){
+  asm volatile( " LDI32    r1, 0x00022000 \n" );
+    //asm volatile("   LBCO   &r2, C28, 0, 4  \n");
+    asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+    asm volatile( " SET    r4, r4.t3 \n" );
+    asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+    asm volatile(" JMP r3.w2 \n" );
+
+}
+uint32_t getCcount(){
+    asm volatile( " LDI32    r1, 0x00022000 \n" );
+    asm volatile ("   LBBO   &r14, r1, 0xC, 4 ");
+    asm volatile("    JMP r3.w2 ");
+}
+
+void clearCcount(){
+
+
+  asm volatile( " LDI32    r1, 0x00022000 \n" );
+  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+  asm volatile( " CLR    r4, r4.t3 \n" );
+  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+
+  asm volatile( " LDI32    r6, 0 \n" );
+  asm volatile ("   SBBO   &r6, r1, 0xC, 4 ");
+
+  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+  asm volatile( " SET    r4, r4.t3 \n" );
+  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+  asm volatile("    JMP r3.w2 ");
 }
