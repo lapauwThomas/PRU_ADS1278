@@ -35,6 +35,7 @@
 #define DATA_IN     ( (uint8_t)( __R31 & 0x000000FF ) )  //bit 7-0
 #define nDRDY       ( __R31 & 0x00004000 )  //bit 14
 #define SCLK        ( __R30 & 0x00008000 )  //bit 15
+#define PPS        ( __R31 & 0x00010000 )  //bit 15
 
 #define SCLK_SET    ( __R30 =  __R30 | 0x00008000 )  //set bit 15
 #define SCLK_CLR    ( __R30 =  __R30 & 0xFFFF7FFF )  //clear bit 15
@@ -76,7 +77,7 @@ int8_t test[2];
 volatile register uint32_t __R30;
 volatile register uint32_t __R31;
 
-uint32_t spiCommand;
+int lastPPsState = 0;
 
 int main(void) {
   struct pru_rpmsg_transport transport;
@@ -175,55 +176,36 @@ int main(void) {
 
   while (1)
   {
-//
-//     while( nDRDY );
-////     SCLK_SET; //clock high for first bit
-////     payload[0] = DATA_IN; //reed MSB in parallel
-////     SCLK_CLR;
-////     __delay_cycles(7);
-//     int i = 0;
-//     payload[0] = (uint8_t)((count & 0xFF000000)>>24);
-//     payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
-//     payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
-//     payload[3] = (uint8_t)((count & 0x000000FF));
-//     for ( i = 0; i < 24; i++)  //  Inner single sample loop
-//     {
-//         //cycle clock
-//         SCLK_SET; //clock high for first bit
-//
-//         payload[4+i] = DATA_IN; //only 8 lsb to payload
-//
-//         SCLK_CLR;
-//        // __delay_cycles(2);
-//     }
-//     count++;
-//
+
+     checkPPS();
 
 
-     //test[0] = 0x09; //horizontal tab: 0x09, carriage return: 0x0D
-     //test[1] = 0x0A; //new line: 0x0A
+     while( nDRDY ){
+         checkPPS();
+     }
+     cCount = getCcount();
+//     SCLK_SET; //clock high for first bit
+//     payload[0] = DATA_IN; //reed MSB in parallel
+//     SCLK_CLR;
+//     __delay_cycles(7);
 
+     payload[0] = (uint8_t)((cCount & 0xFF000000)>>24);
+     payload[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+     payload[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+     payload[3] = (uint8_t)((cCount & 0x000000FF));
 
-     //int l = 0;
-     //for( l = 0; l < 8; l++ )
-     //{
-     //    pru_rpmsg_send(&transport, dst, src, payload+(l*3), 3); //buffer length check
-     //    pru_rpmsg_send(&transport, dst, src, test, 1);
-     //}
+     int i = 0;
+     for ( i = 0; i < 24; i++)  //  Inner single sample loop
+     {
+         //cycle clock
+         SCLK_SET; //clock high for first bit
 
-     //pru_rpmsg_send(&transport, dst, src, test+1, 1); //new line
+         payload[4+i] = DATA_IN; //only 8 lsb to payload
 
+         SCLK_CLR;
+         checkPPS();
 
-     //send data to host
-// pru_rpmsg_send(&transport, dst, src, payload, 24+4); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, test, 2); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, test, 1); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, payload_2, 3); //buffer length check
-
-
-//     //wait a while to prevent console overflow
-//     uint16_t j,k = 0;
-//     for ( j = 0; j < 3000; j++) { for ( k = 0; k < 3000; k++); };
+     }
 
   }
 
@@ -268,3 +250,15 @@ void clearCcount(){
   asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
   asm volatile("    JMP r3.w2 ");
 }
+void checkPPS(){
+
+    if(PPS >0) && lastPPsState == 0{ //rising edge detected
+            clearCcount();
+    }
+    lastPPsState = PPSstate;
+
+}
+
+
+
+
