@@ -10,6 +10,7 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
+"./CC_count.obj" \
 "./main.obj" \
 "../AM335x_PRU.cmd" \
 $(GEN_CMDS__FLAG) \
@@ -153,8 +154,9 @@ PRU_ADS1278.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" 
+	-$(RM) "CC_count.obj" "main.obj" 
 	-$(RM) "main.d" 
+	-$(RM) "CC_count.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

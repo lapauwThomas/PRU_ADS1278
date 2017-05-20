@@ -29,7 +29,32 @@
 #include <stdint.h>
 #include <stdio.h>
 
+//#include "CC_count.asm"
 
+//extern "C" {
+//extern uint32_t getCcount(); /* declare external asm function */
+//}
+//
+//extern "C" {
+//extern void enableCcount(); /* declare external asm function */
+//}
+//
+//extern "C" {
+//extern void disableCcount(); /* declare external asm function */
+//}
+//
+//extern "C" {
+//extern void clearCcount(); /* declare external asm function */
+//}
+//
+//extern "C" {
+//extern void initCcount(); /* declare external asm function */
+//}
+
+
+#define PRU_SHAREDMEM 0x00010000
+volatile register uint32_t __R30;
+volatile register uint32_t __R31;
 
 //PRU0
 #define DATA_IN     ( (uint8_t)( __R31 & 0x000000FF ) )  //bit 7-0
@@ -61,28 +86,26 @@
 #define CHAN_NAME "rpmsg-pru"
 #define CHAN_DESC "Channel 30"
 #define CHAN_PORT 30
-#define PULSEWIDTH 300
 
 //  Used to make sure the Linux drivers are ready for RPMsg communication
 //  Found at linux-x.y.z/include/uapi/linux/virtio_config.h
 #define VIRTIO_CONFIG_S_DRIVER_OK 4
 
 //  Buffer used for PRU to ARM communication.
-int8_t payload[256];
 
-int8_t test[2];
 
-#define PRU_SHAREDMEM 0x00010000
-volatile register uint32_t __R30;
-volatile register uint32_t __R31;
 
-uint32_t spiCommand;
+
+
+
+
 
 int main(void) {
+
   struct pru_rpmsg_transport transport;
   uint16_t src, dst, len;
   volatile uint8_t *status;
-
+  uint8_t payload[256];
   //  1.  Enable OCP Master Port
   CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
   //  Clear the status of PRU-ICSS system event that the ARM will use to 'kick'
@@ -110,66 +133,150 @@ int main(void) {
 
   //  This section of code blocks until a message is received from ARM.
   while (pru_rpmsg_receive(&transport, &src, &dst, payload, &len) !=
-         PRU_RPMSG_SUCCESS) {
-  }
-  /* Priming the 'hostbuffer' with a message */
-  uint8_t hello[] = "hello \n";
-  pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
-  SCLK_CLR;
-  uint32_t count = 0;
+         PRU_RPMSG_SUCCESS) {  }
+
+  initCcount();
+//  enableCcount();
+//
+//
+//  uint32_t cCount = getCcount();
+//  uint8_t test[4];
+//  test[0] = (uint8_t)((cCount & 0xFF000000)>>24);
+//  test[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+//  test[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+//  test[3] = (uint8_t)((cCount & 0x000000FF));
+//  pru_rpmsg_send(&transport, dst, src, test, 4); //buffer length check
+//
+//  __delay_cycles(10000);
+//
+  uint32_t cCount = getCcount();
+//
+//  test[0] = (uint8_t)((cCount & 0xFF000000)>>24);
+//  test[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+//  test[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+//  test[3] = (uint8_t)((cCount & 0x000000FF));
+//  pru_rpmsg_send(&transport, dst, src, test, 4); //buffer length check
+
+  int count=0;
+//  uint32_t stampLSB=0;
+//  uint32_t stampMSB=0;
+
+
   while (1)
   {
+      int k=0;
+      for(k=0;k<17;k++){
 
-     while( nDRDY );
-//     SCLK_SET; //clock high for first bit
-//     payload[0] = DATA_IN; //reed MSB in parallel
-//     SCLK_CLR;
-//     __delay_cycles(7);
-     int i = 0;
-     payload[0] = (uint8_t)((count & 0xFF000000)>>24);
-     payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
-     payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
-     payload[3] = (uint8_t)((count & 0x000000FF));
-     for ( i = 0; i < 24; i++)  //  Inner single sample loop
-     {
-         //cycle clock
-         SCLK_SET; //clock high for first bit
+         while( nDRDY );
 
-         payload[4+i] = DATA_IN; //only 8 lsb to payload
+         int i = 0;
+         payload[24*k+0] = (uint8_t)((count & 0xFF000000)>>24);
+         payload[24*k+1] = (uint8_t)((count & 0x00FF0000)>>16);
+         payload[24*k+2] = (uint8_t)((count & 0x0000FF00)>>8);
+         payload[24*k+3] = (uint8_t)((count & 0x000000FF));
+         for ( i = 0; i < 24; i++)  //  Inner single sample loop
+         {
+             //cycle clock
+             SCLK_SET; //clock high for first bit
 
-         SCLK_CLR;
-        // __delay_cycles(2);
-     }
-     count++;
+             payload[24*k+4+i] = DATA_IN; //only 8 lsb to payload
 
+             SCLK_CLR;
 
+         }
+         count++;
 
-     //test[0] = 0x09; //horizontal tab: 0x09, carriage return: 0x0D
-     //test[1] = 0x0A; //new line: 0x0A
+      }
 
+     pru_rpmsg_send(&transport, dst, src, payload, (24+4)*17); //buffer length check
 
-     //int l = 0;
-     //for( l = 0; l < 8; l++ )
-     //{
-     //    pru_rpmsg_send(&transport, dst, src, payload+(l*3), 3); //buffer length check
-     //    pru_rpmsg_send(&transport, dst, src, test, 1);
-     //}
-
-     //pru_rpmsg_send(&transport, dst, src, test+1, 1); //new line
-
-
-     //send data to host
-     pru_rpmsg_send(&transport, dst, src, payload, 24+4); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, test, 2); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, test, 1); //buffer length check
-     //pru_rpmsg_send(&transport, dst, src, payload_2, 3); //buffer length check
-
-
-//     //wait a while to prevent console overflow
-//     uint16_t j,k = 0;
-//     for ( j = 0; j < 3000; j++) { for ( k = 0; k < 3000; k++); };
 
   }
 
   __halt(); // halt the PRU
 }
+
+
+
+
+uint32_t getCcount(){
+
+    asm("   LBCO   &r14, C28, 0xC, 4 ");
+    asm("    JMP r3.w2 ");
+}
+//
+//void enableCcount(){
+//    __asm__ __volatile__
+//    (
+//    " LBCO   &r2, C28, 0, 4  \n"
+//    " SET    r2, r2.t3 \n"
+//    " SBCO   &r2, C28, 0, 4 \n"
+//    " JMP r3.w2 \n"
+//             );
+//}
+//
+//
+//void disableCcount(){
+//    __asm__ __volatile__
+//    (
+//    " LBCO   &r2, C28, 0, 4  \n"
+//    " CLR    r2, r2.t3 \n"
+//    " SBCO   &r2, C28, 0, 4 \n"
+//    " JMP r3.w2 \n"
+//             );
+//}
+//
+//
+////
+////.global disableCcount
+////disableCcount:
+////LBCO   &r2, C28, 0, 4
+////CLR    r2, r2.t3
+////SBCO   &r2, C28, 0, 4
+////JMP r3.w2
+////
+//
+//void clearCcount(){
+//
+//__asm__ __volatile__
+//    (
+//    " LBCO   &r2, C28, 0, 4  \n"
+//    " CLR   r2, r2.t3 \n"
+//    " SBCO   &r2, C28, 0, 4 \n"
+//    " LBCO   &r2, C28, 0, 4 \n"
+//    " LBCO   &r2, C28, 0, 4  \n"
+//    " SET    r2, r2.t3 \n"
+//    " SBCO   &r2, C28, 0, 4 \n"
+//    " JMP r3.w2 \n"
+//             );
+//
+//}
+//
+void initCcount(){
+
+   asm( " LDI32    r0, 0x22028  \n" );
+   asm( " LDI32    r1, 0x00000220 \n" );
+   asm( " SBBO   &r1, r0, 0, 4 \n" );
+   asm( " JMP r3.w2 \n" );
+
+//}
+
+//.global clearCcount
+//clearCcount:
+//LBCO   &r2, C28, 0, 4
+//SET    r2, r2.t3
+//SBCO   &r2, C28, 0, 4
+//LBCO   &r2, C28, 0, 4
+//SBCO   &r2, C28, 0xC, 4
+//LBCO   &r2, C28, 0, 4
+//SET    r2, r2.t3
+//SBCO   &r2, C28, 0, 4
+//JMP r3.w2
+//
+//.global initCcount
+//initCcount:
+//LDI32    r0, 0x22028
+//LDI32    r1, 0x00000220
+//SBBO   &r1, r0, 0, 4
+//JMP r3.w2
+

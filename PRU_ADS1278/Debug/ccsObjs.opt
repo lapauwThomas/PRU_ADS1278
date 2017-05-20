@@ -1,1 +1,1 @@
-"./main.obj" "../AM335x_PRU.cmd" -llibc.a -l"C:/ti2/pru-software-support-package/lib/rpmsg_lib.lib" 
+"./CC_count.obj" "./main.obj" "../AM335x_PRU.cmd" -llibc.a -l"C:/ti2/pru-software-support-package/lib/rpmsg_lib.lib" 
