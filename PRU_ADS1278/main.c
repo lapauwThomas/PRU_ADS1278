@@ -29,27 +29,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-//#include "CC_count.asm"
-
-//extern "C" {
-//extern uint32_t getCcount(); /* declare external asm function */
-//}
-//
-//extern "C" {
-//extern void enableCcount(); /* declare external asm function */
-//}
-//
-//extern "C" {
-//extern void disableCcount(); /* declare external asm function */
-//}
-//
-//extern "C" {
-//extern void clearCcount(); /* declare external asm function */
-//}
-//
-//extern "C" {
-//extern void initCcount(); /* declare external asm function */
-//}
 
 
 #define PRU_SHAREDMEM 0x00010000
@@ -91,11 +70,8 @@ volatile register uint32_t __R31;
 //  Found at linux-x.y.z/include/uapi/linux/virtio_config.h
 #define VIRTIO_CONFIG_S_DRIVER_OK 4
 
-//  Buffer used for PRU to ARM communication.
 
-
-
-
+uint8_t payload[256];
 
 
 
@@ -133,150 +109,137 @@ int main(void) {
 
   //  This section of code blocks until a message is received from ARM.
   while (pru_rpmsg_receive(&transport, &src, &dst, payload, &len) !=
-         PRU_RPMSG_SUCCESS) {  }
+         PRU_RPMSG_SUCCESS) { }
+  /* Priming the 'hostbuffer' with a message */
+  uint8_t hello[] = "hello \n";
+  pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
+  SCLK_CLR;
+  uint32_t cCount = 0;
 
-  initCcount();
-//  enableCcount();
 //
-//
-//  uint32_t cCount = getCcount();
-//  uint8_t test[4];
-//  test[0] = (uint8_t)((cCount & 0xFF000000)>>24);
-//  test[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
-//  test[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
-//  test[3] = (uint8_t)((cCount & 0x000000FF));
-//  pru_rpmsg_send(&transport, dst, src, test, 4); //buffer length check
-//
+ //initCcount();
+ enableCcount();
+  __delay_cycles(1000);
+ cCount = getCcount();
+
+  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+  uint8_t banaan[] = "geel \n";
+  pru_rpmsg_send(&transport, dst, src, banaan, 10); //buffer length check
+
+  __delay_cycles(1000);
+ cCount = getCcount();
+
+  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+  uint8_t rood[] = "rood \n";
+    pru_rpmsg_send(&transport, dst, src, rood, 10); //buffer length check
+
+    clearCcount();
+
+    cCount = getCcount();
+
+      payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
+      payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
+      payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
+      payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
+
+
+      pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
+
+      uint8_t groen[] = "groen \n";
+        pru_rpmsg_send(&transport, dst, src, groen, 10); //buffer length check
 //  __delay_cycles(10000);
 //
-  uint32_t cCount = getCcount();
+//  cCount = getCcount();
+//    payload[0] = (uint8_t)((count & 0xFF000000)>>24);
+//    payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
+//    payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
+//    payload[3] = (uint8_t)((count & 0x000000FF));
+//    pru_rpmsg_send(&transport, dst, src, payload, 4); //buffer length check
 //
-//  test[0] = (uint8_t)((cCount & 0xFF000000)>>24);
-//  test[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
-//  test[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
-//  test[3] = (uint8_t)((cCount & 0x000000FF));
-//  pru_rpmsg_send(&transport, dst, src, test, 4); //buffer length check
-
-  int count=0;
-//  uint32_t stampLSB=0;
-//  uint32_t stampMSB=0;
-
 
   while (1)
   {
-      int k=0;
-      for(k=0;k<17;k++){
 
-         while( nDRDY );
+     while( nDRDY );
+//     SCLK_SET; //clock high for first bit
+//     payload[0] = DATA_IN; //reed MSB in parallel
+//     SCLK_CLR;
+//     __delay_cycles(7);
+     int i = 0;
+     payload[0] = (uint8_t)((cCount & 0xFF000000)>>24);
+     payload[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+     payload[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+     payload[3] = (uint8_t)((cCount & 0x000000FF));
+     for ( i = 0; i < 24; i++)  //  Inner single sample loop
+     {
+         //cycle clock
+         SCLK_SET; //clock high for first bit
 
-         int i = 0;
-         payload[24*k+0] = (uint8_t)((count & 0xFF000000)>>24);
-         payload[24*k+1] = (uint8_t)((count & 0x00FF0000)>>16);
-         payload[24*k+2] = (uint8_t)((count & 0x0000FF00)>>8);
-         payload[24*k+3] = (uint8_t)((count & 0x000000FF));
-         for ( i = 0; i < 24; i++)  //  Inner single sample loop
-         {
-             //cycle clock
-             SCLK_SET; //clock high for first bit
+         payload[4+i] = DATA_IN; //only 8 lsb to payload
 
-             payload[24*k+4+i] = DATA_IN; //only 8 lsb to payload
-
-             SCLK_CLR;
-
-         }
-         count++;
-
-      }
-
-     pru_rpmsg_send(&transport, dst, src, payload, (24+4)*17); //buffer length check
+         SCLK_CLR;
+        // __delay_cycles(2);
+     }
 
 
   }
+
+
 
   __halt(); // halt the PRU
 }
 
 
 
-
-uint32_t getCcount(){
-
-    asm("   LBCO   &r14, C28, 0xC, 4 ");
-    asm("    JMP r3.w2 ");
-}
-//
-//void enableCcount(){
-//    __asm__ __volatile__
-//    (
-//    " LBCO   &r2, C28, 0, 4  \n"
-//    " SET    r2, r2.t3 \n"
-//    " SBCO   &r2, C28, 0, 4 \n"
-//    " JMP r3.w2 \n"
-//             );
-//}
-//
-//
-//void disableCcount(){
-//    __asm__ __volatile__
-//    (
-//    " LBCO   &r2, C28, 0, 4  \n"
-//    " CLR    r2, r2.t3 \n"
-//    " SBCO   &r2, C28, 0, 4 \n"
-//    " JMP r3.w2 \n"
-//             );
-//}
-//
-//
-////
-////.global disableCcount
-////disableCcount:
-////LBCO   &r2, C28, 0, 4
-////CLR    r2, r2.t3
-////SBCO   &r2, C28, 0, 4
-////JMP r3.w2
-////
-//
-//void clearCcount(){
-//
-//__asm__ __volatile__
-//    (
-//    " LBCO   &r2, C28, 0, 4  \n"
-//    " CLR   r2, r2.t3 \n"
-//    " SBCO   &r2, C28, 0, 4 \n"
-//    " LBCO   &r2, C28, 0, 4 \n"
-//    " LBCO   &r2, C28, 0, 4  \n"
-//    " SET    r2, r2.t3 \n"
-//    " SBCO   &r2, C28, 0, 4 \n"
-//    " JMP r3.w2 \n"
-//             );
-//
-//}
-//
 void initCcount(){
 
-   asm( " LDI32    r0, 0x22028  \n" );
-   asm( " LDI32    r1, 0x00000220 \n" );
-   asm( " SBBO   &r1, r0, 0, 4 \n" );
-   asm( " JMP r3.w2 \n" );
+   asm volatile ("  LDI32    r0, 0x00022028 \n");
+   asm volatile( " LDI32    r1, 0x00022000 \n" );
+   asm volatile( " SBBO   &r1, r0, 0, 4 \n" );
+   asm volatile( " JMP r3.w2 \n" );
+}
+void enableCcount(){
+    asm volatile( " LDI32    r1, 0x00022000 \n" );
+    asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+    asm volatile( " SET    r4, r4.t3 \n" );
+    asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+    asm volatile(" JMP r3.w2 \n" );
 
-//}
+}
+uint32_t getCcount(){
+    asm volatile( " LDI32    r1, 0x00022000 \n" );
+    asm volatile ("   LBBO   &r14, r1, 0xC, 4 ");
+    asm volatile("    JMP r3.w2 ");
+}
 
-//.global clearCcount
-//clearCcount:
-//LBCO   &r2, C28, 0, 4
-//SET    r2, r2.t3
-//SBCO   &r2, C28, 0, 4
-//LBCO   &r2, C28, 0, 4
-//SBCO   &r2, C28, 0xC, 4
-//LBCO   &r2, C28, 0, 4
-//SET    r2, r2.t3
-//SBCO   &r2, C28, 0, 4
-//JMP r3.w2
-//
-//.global initCcount
-//initCcount:
-//LDI32    r0, 0x22028
-//LDI32    r1, 0x00000220
-//SBBO   &r1, r0, 0, 4
-//JMP r3.w2
+void clearCcount(){
+
+
+  asm volatile( " LDI32    r1, 0x00022000 \n" );
+  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+  asm volatile( " CLR    r4, r4.t3 \n" );
+  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+
+  asm volatile( " LDI32    r6, 0 \n" );
+  asm volatile ("   SBBO   &r6, r1, 0xC, 4 ");
+
+  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
+  asm volatile( " SET    r4, r4.t3 \n" );
+  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+  asm volatile("    JMP r3.w2 ");
+}
 
