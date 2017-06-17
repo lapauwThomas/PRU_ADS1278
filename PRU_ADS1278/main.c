@@ -62,14 +62,13 @@
 #define CHAN_NAME "rpmsg-pru"
 #define CHAN_DESC "Channel 30"
 #define CHAN_PORT 30
-#define PULSEWIDTH 300
 
 //  Used to make sure the Linux drivers are ready for RPMsg communication
 //  Found at linux-x.y.z/include/uapi/linux/virtio_config.h
 #define VIRTIO_CONFIG_S_DRIVER_OK 4
 
 //  Buffer used for PRU to ARM communication.
-uint8_t payload[256];
+uint8_t payload[480];
 
 int8_t test[2];
 
@@ -113,17 +112,15 @@ int main(void) {
   while (pru_rpmsg_receive(&transport, &src, &dst, payload, &len) !=
          PRU_RPMSG_SUCCESS) {
   }
-  /* Priming the 'hostbuffer' with a message */
-  uint8_t hello[] = "hello \n";
-  pru_rpmsg_send(&transport, dst, src, hello, 10); //buffer length check
+
+
+
   SCLK_CLR;
   uint32_t cCount = 0;
 
 //
  //initCcount();
- enableCcount();
-  __delay_cycles(1000);
- cCount = getCcount();
+
 
   payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
   payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
@@ -131,13 +128,7 @@ int main(void) {
   payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
 
 
-  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
 
-  uint8_t banaan[] = "geel \n";
-  pru_rpmsg_send(&transport, dst, src, banaan, 10); //buffer length check
-
-  __delay_cycles(1000);
- cCount = getCcount();
 
   payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
   payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
@@ -145,103 +136,84 @@ int main(void) {
   payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
 
 
-  pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
 
-  uint8_t rood[] = "rood \n";
-    pru_rpmsg_send(&transport, dst, src, rood, 10); //buffer length check
-
-    clearCcount();
-
-    cCount = getCcount();
-
-      payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
-      payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
-      payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
-      payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
-
-
-      pru_rpmsg_send(&transport, dst, src, payload, 10); //buffer length check
-
-      uint8_t groen[] = "groen \n";
-        pru_rpmsg_send(&transport, dst, src, groen, 10); //buffer length check
-//  __delay_cycles(10000);
-//
-//  cCount = getCcount();
-//    payload[0] = (uint8_t)((count & 0xFF000000)>>24);
-//    payload[1] = (uint8_t)((count & 0x00FF0000)>>16);
-//    payload[2] = (uint8_t)((count & 0x0000FF00)>>8);
-//    payload[3] = (uint8_t)((count & 0x000000FF));
-//    pru_rpmsg_send(&transport, dst, src, payload, 4); //buffer length check
-//
+  enableCcount();
 
   while (1)
   {
 
-
-                     while( nDRDY ){
-                             checkPPS();
-                         }
-                         cCount = getCcount();
-
-                    int i = 0;
-                    payload[0] = (uint8_t)((cCount & 0xFF000000)>>24);
-                    payload[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
-                    payload[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
-                    payload[3] = (uint8_t)((cCount & 0x000000FF));
-                    checkPPS();
-                    for ( i = 0; i < 24; i++)  //  Inner single sample loop
-                    {
-                        //cycle clock
-                        SCLK_SET; //clock high for first bit
-
-                        payload[4+i] = DATA_IN; //only 8 lsb to payload
-
-                        SCLK_CLR;
-
-                    }
-
-
-
-                pru_rpmsg_send(&transport, dst, src, payload, (24+4)); //buffer length check
-
-
-
-
-
 //
-//             int k=0;
-//           for(k=0;k<17;k++){
+//                     while( nDRDY ){
+//                             checkPPS();
+//                         }
+//                         cCount = getCcount();
 //
-//               while( nDRDY ){
-//                       checkPPS();
-//                   }
-//                   cCount = getCcount();
+//                    int i = 0;
+//                    payload[0] = (uint8_t)((cCount & 0xFF000000)>>24);
+//                    payload[1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+//                    payload[2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+//                    payload[3] = (uint8_t)((cCount & 0x000000FF));
+//                    checkPPS();
+//                    for ( i = 0; i < 24; i++)  //  Inner single sample loop
+//                    {
+//                        //cycle clock
+//                        SCLK_SET; //clock high for first bit
 //
-//              int i = 0;
-//              payload[24*k+0] = (uint8_t)((cCount & 0xFF000000)>>24);
-//              payload[24*k+1] = (uint8_t)((cCount & 0x00FF0000)>>16);
-//              payload[24*k+2] = (uint8_t)((cCount & 0x0000FF00)>>8);
-//              payload[24*k+3] = (uint8_t)((cCount & 0x000000FF));
-//              checkPPS();
-//              for ( i = 0; i < 24; i++)  //  Inner single sample loop
-//              {
-//                  //cycle clock
-//                  SCLK_SET; //clock high for first bit
+//                        payload[4+i] = DATA_IN; //only 8 lsb to payload
 //
-//                  payload[24*k+4+i] = DATA_IN; //only 8 lsb to payload
+//                        SCLK_CLR;
 //
-//                  SCLK_CLR;
-//
-//                  checkPPS();
-//
-//              }
+//                    }
 //
 //
-//           }
 //
-//          pru_rpmsg_send(&transport, dst, src, payload, (24+4)*17); //buffer length check
+//                pru_rpmsg_send(&transport, dst, src, payload, (24+4)); //buffer length check
 //
-//
+
+
+
+
+          /*
+           * Collect 17 samples before packing them into a packet
+           */
+             int k=0;
+           for(k=0;k<17;k++){
+
+               //Wait until dataReady goes low
+               while( nDRDY ){
+                       checkPPS(); //meanwhile check the PPS signal
+                   }
+                   cCount = getCcount(); //get the cycle counter value when the sample is collected
+
+
+              //pack the 32 bits cycle counter value in the payload by splitting into bytes
+              payload[28*k+0] = (uint8_t)((cCount & 0xFF000000)>>24);
+              payload[28*k+1] = (uint8_t)((cCount & 0x00FF0000)>>16);
+              payload[28*k+2] = (uint8_t)((cCount & 0x0000FF00)>>8);
+              payload[28*k+3] = (uint8_t)((cCount & 0x000000FF));
+
+              checkPPS();
+
+              int i = 0; //Retrieve the data using the parallel protocol
+              for ( i = 0; i < 24; i++)  //  Inner single sample loop
+              {
+                  SCLK_SET; //clock high for first bit
+
+                  payload[(28*k)+ 4 + i] = DATA_IN; //only 8 lsb to payload
+
+                  SCLK_CLR; //Set clock low
+
+                  checkPPS(); //meanwhile check the PPS signal each time
+
+              }
+
+
+           }
+
+           //Transfer the packet to the host.
+          pru_rpmsg_send(&transport, dst, src, payload,  476);
+
+
 
 //
 
@@ -250,45 +222,61 @@ int main(void) {
   __halt(); // halt the PRU
 }
 
+/*
+ * Function to initialize the Pointer register C28 to point to the cycle counter offset
+ */
 void initCcount(){
 
    asm volatile ("  LDI32    r0, 0x00022028 \n");
-   asm volatile( " LDI32    r1, 0x00022000 \n" );
-   asm volatile( " SBBO   &r1, r0, 0, 4 \n" );
+   asm volatile( " LDI32    r26, 0x00022000 \n" );
+   asm volatile( " SBBO   &r26, r0, 0, 4 \n" );
    asm volatile( " JMP r3.w2 \n" );
 }
+/*
+ * Function to enable the cycle counter
+ */
 void enableCcount(){
-  asm volatile( " LDI32    r1, 0x00022000 \n" );
+  asm volatile( " LDI32    r26, 0x00022000 \n" );
     //asm volatile("   LBCO   &r2, C28, 0, 4  \n");
-    asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
-    asm volatile( " SET    r4, r4.t3 \n" );
-    asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+    asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
+    asm volatile( " SET    r27, r27.t3 \n" );
+    asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
     asm volatile(" JMP r3.w2 \n" );
 
 }
+
+/*
+ * Function to get the current value of the cycle counter
+ */
 uint32_t getCcount(){
-    asm volatile( " LDI32    r1, 0x00022000 \n" );
-    asm volatile ("   LBBO   &r14, r1, 0xC, 4 ");
+    asm volatile( " LDI32    r26, 0x00022000 \n" );
+    asm volatile ("   LBBO   &r14, r26, 0xC, 4 ");
     asm volatile("    JMP r3.w2 ");
 }
 
+/*
+ * Stops the counter, clears the value and starts it again
+ */
 void clearCcount(){
 
 
-  asm volatile( " LDI32    r1, 0x00022000 \n" );
-  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
-  asm volatile( " CLR    r4, r4.t3 \n" );
-  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+  asm volatile( " LDI32    r26, 0x00022000 \n" );
+  asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
+  asm volatile( " CLR    r27, r27.t3 \n" );
+  asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
 
-  asm volatile( " LDI32    r6, 0 \n" );
-  asm volatile ("   SBBO   &r6, r1, 0xC, 4 ");
+  asm volatile( " LDI32    r28, 0 \n" );
+  asm volatile ("   SBBO   &r28, r26, 0xC, 4 ");
 
-  asm volatile("  LBBO    &r4, r1, 0, 4 \n" );
-  asm volatile( " SET    r4, r4.t3 \n" );
-  asm volatile(" SBBO   &r4, r1, 0, 4 \n" );
+  asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
+  asm volatile( " SET    r27, r27.t3 \n" );
+  asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
   asm volatile("    JMP r3.w2 ");
 }
 
+/*
+ * Function to check the rising edge of the PPS input, and to clear the cycle counter on the rising edge
+ */
 void checkPPS(){
     if( PPS > 0 && lastPPsState == 0 ){ //rising edge detected
             clearCcount();
