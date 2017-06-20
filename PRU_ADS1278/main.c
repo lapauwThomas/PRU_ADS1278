@@ -6,20 +6,8 @@
 //  MISO:         P9.28 pr1_pru0_pru_r31_3
 //  SPI CLK:      P9.30 pr1_pru0_pru_r30_2
 //  Sample Clock: P8.46 pr1_pru1_pru_r30_1  (testing only)
-//  Copyright (C) 2016  Gregory Raven
+
 //
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "resource_table_0.h"
 #include <am335x/pru_cfg.h>
@@ -31,7 +19,6 @@
 
 
 
-//PRU0
 #define DATA_IN     ( (uint8_t)( __R31 & 0x000000FF ) )  //bit 7-0
 #define nDRDY       ( __R31 & 0x00004000 )  //bit 14
 #define SCLK        ( __R30 & 0x00008000 )  //bit 15
@@ -69,8 +56,6 @@
 
 //  Buffer used for PRU to ARM communication.
 uint8_t payload[480];
-
-int8_t test[2];
 
 #define PRU_SHAREDMEM 0x00010000
 volatile register uint32_t __R30;
@@ -116,26 +101,6 @@ int main(void) {
 
 
   SCLK_CLR;
-  uint32_t cCount = 0;
-
-//
- //initCcount();
-
-
-  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
-  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
-  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
-  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
-
-
-
-
-  payload[0] = 0x41+ (uint8_t)((cCount & 0xFF000000)>>24);
-  payload[1] = 0x41+ (uint8_t)((cCount & 0x00FF0000)>>16);
-  payload[2] = 0x41+ (uint8_t)((cCount & 0x0000FF00)>>8);
-  payload[3] = 0x41+ (uint8_t)((cCount & 0x000000FF));
-
-
 
   enableCcount();
 
@@ -165,12 +130,7 @@ int main(void) {
 //
 //                    }
 //
-//
-//
 //                pru_rpmsg_send(&transport, dst, src, payload, (24+4)); //buffer length check
-//
-
-
 
 
           /*
@@ -204,10 +164,7 @@ int main(void) {
                   SCLK_CLR; //Set clock low
 
                   checkPPS(); //meanwhile check the PPS signal each time
-
               }
-
-
            }
 
            //Transfer the packet to the host.
@@ -225,6 +182,7 @@ int main(void) {
 /*
  * Function to initialize the Pointer register C28 to point to the cycle counter offset
  */
+//DEPRECATED, not in use since pointer register is not used.
 void initCcount(){
 
    asm volatile ("  LDI32    r0, 0x00022028 \n");
@@ -236,12 +194,12 @@ void initCcount(){
  * Function to enable the cycle counter
  */
 void enableCcount(){
-  asm volatile( " LDI32    r26, 0x00022000 \n" );
+  asm volatile( " LDI32    r26, 0x00022000 \n" );   // load register offset into register 26
     //asm volatile("   LBCO   &r2, C28, 0, 4  \n");
-    asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
-    asm volatile( " SET    r27, r27.t3 \n" );
-    asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
-    asm volatile(" JMP r3.w2 \n" );
+    asm volatile("  LBBO    &r27, r26, 0, 4 \n" ); //load the value contained on the address from r26 into r27
+    asm volatile( " SET    r27, r27.t3 \n" );  // set the counter enable bit
+    asm volatile(" SBBO   &r27, r26, 0, 4 \n" );  //put the new value back into address in r26
+    asm volatile(" JMP r3.w2 \n" ); // return
 
 }
 
@@ -249,9 +207,9 @@ void enableCcount(){
  * Function to get the current value of the cycle counter
  */
 uint32_t getCcount(){
-    asm volatile( " LDI32    r26, 0x00022000 \n" );
-    asm volatile ("   LBBO   &r14, r26, 0xC, 4 ");
-    asm volatile("    JMP r3.w2 ");
+    asm volatile( " LDI32    r26, 0x00022000 \n" ); //store the cycle counter register offset
+    asm volatile ("   LBBO   &r14, r26, 0xC, 4 "); //write the cycle counter to the return value register. The offset of the value register is 0xC wrt the address stored in r26.
+    asm volatile("    JMP r3.w2 "); //ret
 }
 
 /*
@@ -259,19 +217,21 @@ uint32_t getCcount(){
  */
 void clearCcount(){
 
-
+    //disable the counter
   asm volatile( " LDI32    r26, 0x00022000 \n" );
   asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
   asm volatile( " CLR    r27, r27.t3 \n" );
   asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
 
+  //write 0 to the cycle counter register
   asm volatile( " LDI32    r28, 0 \n" );
   asm volatile ("   SBBO   &r28, r26, 0xC, 4 ");
 
+  //reEnable the cycle counter
   asm volatile("  LBBO    &r27, r26, 0, 4 \n" );
   asm volatile( " SET    r27, r27.t3 \n" );
   asm volatile(" SBBO   &r27, r26, 0, 4 \n" );
-  asm volatile("    JMP r3.w2 ");
+  asm volatile("    JMP r3.w2 "); //ret
 }
 
 /*
